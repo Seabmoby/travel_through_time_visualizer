@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -ExecutionPolicy Bypass -File \".specify/scripts/powershell/setup-plan.ps1\" -Json)",
+      "Bash(git rev-parse:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -PathsOnly)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json)",
+      "Bash(node:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)",
+      "Bash(npm test)",
+      "Bash(Get-Unique)",
+      "Bash(npx http-server:*)",
+      "Bash(xcopy:*)",
+      "WebFetch(domain:api.mapbox.com)",
+      "Bash(echo:*)",
+      "Bash(gh auth:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(gh api:*)",
+      "Bash(gh repo create:*)"
+    ]
+  }
+}
