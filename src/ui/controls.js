@@ -14,6 +14,146 @@ import { getColorSchemes } from './map.js';
 const APP_VERSION = '1.2.0';
 const APP_VERSION_DATE = '2026-01-22';
 
+// Markdown documentation path
+const DOCS_PATH = 'docs/aoi-value-calculation.md';
+
+/**
+ * Simple markdown to HTML converter
+ * Handles: headers, bold, code blocks, inline code, lists, tables, paragraphs
+ * @param {string} markdown - Markdown text
+ * @returns {string} HTML string
+ */
+function markdownToHtml(markdown) {
+    let html = markdown;
+
+    // Escape HTML entities first (but preserve markdown syntax)
+    html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // Code blocks (``` ... ```)
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        return `<pre><code>${code.trim()}</code></pre>`;
+    });
+
+    // Tables
+    html = html.replace(/^\|(.+)\|\s*\n\|[-:\s|]+\|\s*\n((?:\|.+\|\s*\n?)+)/gm, (match, header, body) => {
+        const headers = header.split('|').map(h => h.trim()).filter(h => h);
+        const rows = body.trim().split('\n').map(row =>
+            row.split('|').map(cell => cell.trim()).filter(cell => cell)
+        );
+
+        let table = '<table><thead><tr>';
+        headers.forEach(h => table += `<th>${h}</th>`);
+        table += '</tr></thead><tbody>';
+        rows.forEach(row => {
+            table += '<tr>';
+            row.forEach(cell => table += `<td>${cell}</td>`);
+            table += '</tr>';
+        });
+        table += '</tbody></table>';
+        return table;
+    });
+
+    // Headers (must come before bold processing)
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // Bold (**text**)
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Inline code (`code`)
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Unordered lists
+    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+    // Paragraphs (lines that aren't already wrapped)
+    const lines = html.split('\n');
+    const processed = [];
+    let inPre = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.includes('<pre>')) inPre = true;
+        if (line.includes('</pre>')) inPre = false;
+
+        if (inPre ||
+            line.startsWith('<h') ||
+            line.startsWith('<ul') ||
+            line.startsWith('<li') ||
+            line.startsWith('</') ||
+            line.startsWith('<table') ||
+            line.startsWith('<pre') ||
+            line.trim() === '') {
+            processed.push(line);
+        } else {
+            processed.push(`<p>${line}</p>`);
+        }
+    }
+
+    return processed.join('\n');
+}
+
+/**
+ * Create and show info modal with markdown content
+ */
+async function showInfoModal() {
+    // Check if modal already exists
+    let overlay = document.querySelector('.modal-overlay');
+
+    if (!overlay) {
+        // Create modal structure
+        overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>How Values Are Calculated</h2>
+                    <button class="modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Loading...</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // Close handlers
+        overlay.querySelector('.modal-close').addEventListener('click', () => {
+            overlay.classList.remove('visible');
+        });
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('visible');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('visible')) {
+                overlay.classList.remove('visible');
+            }
+        });
+    }
+
+    // Show modal
+    overlay.classList.add('visible');
+
+    // Load markdown content
+    const body = overlay.querySelector('.modal-body');
+    try {
+        const response = await fetch(DOCS_PATH);
+        if (!response.ok) throw new Error('Failed to load documentation');
+        const markdown = await response.text();
+        body.innerHTML = markdownToHtml(markdown);
+    } catch (error) {
+        body.innerHTML = '<p>Failed to load documentation.</p>';
+        console.error('Error loading docs:', error);
+    }
+}
+
 /**
  * Series Dimension Types
  */
@@ -159,14 +299,11 @@ export function createControlPanel(container, options) {
             });
         }
 
-        // Info Panel Toggle
+        // Info Panel Toggle - opens modal with markdown docs
         const infoToggle = container.querySelector('#info-toggle');
-        const infoContent = container.querySelector('#info-content');
-        if (infoToggle && infoContent) {
+        if (infoToggle) {
             infoToggle.addEventListener('click', () => {
-                const isVisible = infoContent.style.display !== 'none';
-                infoContent.style.display = isVisible ? 'none' : 'block';
-                infoToggle.setAttribute('aria-expanded', !isVisible);
+                showInfoModal();
             });
         }
 
@@ -831,16 +968,8 @@ function buildControlPanelHTML(regions, timeRange, state) {
         <div class="control-section info-panel">
             <h3 class="control-section-title">
                 About This Data
-                <button type="button" class="info-toggle" id="info-toggle" aria-expanded="false">?</button>
+                <button type="button" class="info-toggle" id="info-toggle" aria-label="Show calculation details">?</button>
             </h3>
-            <div class="info-content" id="info-content" style="display: none;">
-                <p><strong>Data Volume:</strong> 18 months of readings (Jan 1, 2023 - Jun 30, 2024) across 6 SF areas with ~315,000 total data points.</p>
-                <p><strong>Areas of Interest:</strong> Downtown (2,500 spaces), SOMA (1,800), Mission (1,500), Marina (1,200), Richmond (1,000), Sunset (900).</p>
-                <p><strong>San Francisco:</strong> Aggregate of all neighborhood AOIs, calculated as weighted average by parking capacity.</p>
-                <p><strong>Aggregations:</strong> Data is grouped into time buckets. Each bucket shows the selected statistic (avg, median, etc.) of all readings in that period.</p>
-                <p><strong>Combined View:</strong> When enabled, multiple AOIs are merged using weighted average by parking capacity - larger areas contribute more to the result.</p>
-                <p><strong>Statistics:</strong> Average (mean), Median (middle value), Min/Max (extremes), Mode (most common), Percentiles (distribution points).</p>
-            </div>
         </div>
 
         <!-- Time Range -->
