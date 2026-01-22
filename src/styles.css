@@ -1222,3 +1222,12 @@ html, body {
 .reset-btn:active {
     background: rgba(231, 76, 60, 0.1);
 }
+
+/* Version Label */
+.version-label {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    padding: var(--spacing-sm) 0;
+    margin-top: var(--spacing-sm);
+}

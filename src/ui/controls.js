@@ -10,6 +10,10 @@ import { createDateRangePicker } from './date-range-picker.js';
 import { DATASET_TYPES } from '../lib/data-loader.js';
 import { getColorSchemes } from './map.js';
 
+// App version info
+const APP_VERSION = '1.1.0';
+const APP_VERSION_DATE = '2026-01-22';
+
 /**
  * Series Dimension Types
  */
@@ -1109,6 +1113,11 @@ function buildControlPanelHTML(regions, timeRange, state) {
             <button type="button" id="reset-settings-btn" class="reset-btn">
                 Reset All Settings
             </button>
+        </div>
+
+        <!-- Version Label -->
+        <div class="version-label">
+            v${APP_VERSION} (${APP_VERSION_DATE})
         </div>
     `;
 }
