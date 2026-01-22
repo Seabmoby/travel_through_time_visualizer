@@ -82,6 +82,16 @@ The map and chart now use the same bucketing logic:
 
 The map essentially answers: **"What's the typical [statistic] value at this [interval] for this neighborhood?"**
 
+### Reference Lines on Chart
+
+The chart displays a horizontal dashed reference line for each series, showing the same aggregated value that appears on the map. This visually connects the map's single-value display with the chart's time series:
+
+- **Line style**: Dashed, colored to match its series
+- **Label**: Shows the aggregated value (e.g., "72.5%")
+- **Position**: Horizontal line at the y-axis value
+
+This allows users to see both the time series variation AND where the "typical" value falls.
+
 ### Why This Matters
 
 | Settings | Old Behavior | New Behavior |
