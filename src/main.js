@@ -849,11 +849,17 @@ function processAOISeries(readings, selectedAOIs, data, datasetType) {
 
             dataPoints.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
+            // Calculate reference value (average of bucket statistics - same as map display)
+            const referenceValue = dataPoints.length > 0
+                ? dataPoints.reduce((sum, p) => sum + p.value, 0) / dataPoints.length
+                : 0;
+
             series.push({
                 id: aoiId,
                 name: aoiInfo.name,
                 color: aoiInfo.color,
-                data: dataPoints
+                data: dataPoints,
+                referenceValue
             });
         } else {
             // Individual AOI
@@ -883,11 +889,17 @@ function processAOISeries(readings, selectedAOIs, data, datasetType) {
 
             dataPoints.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
+            // Calculate reference value (average of bucket statistics - same as map display)
+            const referenceValue = dataPoints.length > 0
+                ? dataPoints.reduce((sum, p) => sum + p.value, 0) / dataPoints.length
+                : 0;
+
             series.push({
                 id: aoiId,
                 name: aoiInfo.name,
                 color: aoiInfo.color,
-                data: dataPoints
+                data: dataPoints,
+                referenceValue
             });
         }
     }
@@ -968,12 +980,18 @@ function processDayOfWeekSeries(readings, selectedDays, datasetType) {
 
                 dataPoints.sort((a, b) => a.hour - b.hour);
 
+                // Calculate reference value (average of hourly values)
+                const referenceValue = dataPoints.length > 0
+                    ? dataPoints.reduce((sum, p) => sum + p.value, 0) / dataPoints.length
+                    : 0;
+
                 series.push({
                     id: `day-${dayNum}-${dateKey}`,
                     name: `${dayOption.name} (${dateKey})`,
                     color: dayOption.color,
                     data: dataPoints,
-                    xAxisType: 'hour' // Flag for chart to use category axis
+                    xAxisType: 'hour', // Flag for chart to use category axis
+                    referenceValue
                 });
             }
         } else {
@@ -1005,12 +1023,18 @@ function processDayOfWeekSeries(readings, selectedDays, datasetType) {
 
             dataPoints.sort((a, b) => a.hour - b.hour);
 
+            // Calculate reference value (average of hourly values)
+            const referenceValue = dataPoints.length > 0
+                ? dataPoints.reduce((sum, p) => sum + p.value, 0) / dataPoints.length
+                : 0;
+
             series.push({
                 id: `day-${dayNum}`,
                 name: dayOption.name,
                 color: dayOption.color,
                 data: dataPoints,
-                xAxisType: 'hour' // Flag for chart to use category axis
+                xAxisType: 'hour', // Flag for chart to use category axis
+                referenceValue
             });
         }
     }
@@ -1082,12 +1106,18 @@ function processTimeOfDaySeries(readings, selectedPeriods, datasetType) {
             }
         }
 
+        // Calculate reference value (average of daily values)
+        const referenceValue = dataPoints.length > 0
+            ? dataPoints.reduce((sum, p) => sum + p.value, 0) / dataPoints.length
+            : 0;
+
         series.push({
             id: `time-${periodId}`,
             name: periodOption.name,
             color: periodOption.color,
             data: dataPoints,
-            xAxisType: 'dayOfWeek' // Flag for chart to use day-of-week category axis
+            xAxisType: 'dayOfWeek', // Flag for chart to use day-of-week category axis
+            referenceValue
         });
     }
 
@@ -1141,11 +1171,17 @@ function createCombinedSeries(readings, selectedAOIs, datasetType) {
 
     dataPoints.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
+    // Calculate reference value (average of bucket statistics)
+    const referenceValue = dataPoints.length > 0
+        ? dataPoints.reduce((sum, p) => sum + p.value, 0) / dataPoints.length
+        : 0;
+
     return {
         id: 'combined',
         name: isTransactions ? 'Combined AOIs (Total)' : 'Combined AOIs (Weighted)',
         color: '#3498db',
-        data: dataPoints
+        data: dataPoints,
+        referenceValue
     };
 }
 
@@ -1214,11 +1250,17 @@ function processBlockfaceSeries(selectedBlockfaceIds, datasetType) {
 
             dataPoints.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
+            // Calculate reference value (average of bucket statistics)
+            const referenceValue = dataPoints.length > 0
+                ? dataPoints.reduce((sum, p) => sum + p.value, 0) / dataPoints.length
+                : 0;
+
             series.push({
                 id: blockfaceInfo.id,
                 name: blockfaceInfo.name,
                 color: blockfaceInfo.color || '#3498db',
-                data: dataPoints
+                data: dataPoints,
+                referenceValue
             });
         }
     }
@@ -1241,7 +1283,8 @@ function processBlockfaceSeries(selectedBlockfaceIds, datasetType) {
             id: state.seriesDimension.segmentId,
             name: `${segmentName} (Current)`,
             color: '#3498db',
-            data: [{ timestamp: now, value: value }]
+            data: [{ timestamp: now, value: value }],
+            referenceValue: value // Single point, reference is the value itself
         });
     }
 

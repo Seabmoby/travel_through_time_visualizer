@@ -260,22 +260,53 @@ function buildTimeSeriesOption(data, config, containerWidth = 800) {
         }
     } : undefined;
 
-    const series = data.series.map(s => ({
-        name: s.name,
-        type: config.type === 'bar' ? 'bar' : 'line',
-        data: isCategoryAxis
-            ? s.data.map(d => d.value) // Category axis: just values
-            : s.data.map(d => [d.timestamp, d.value]), // Time axis: [timestamp, value]
-        itemStyle: { color: s.color },
-        smooth: config.type === 'line',
-        areaStyle: (config.type === 'area' || config.type === 'stacked-area') ? {
-            opacity: 0.3
-        } : undefined,
-        stack: config.type === 'stacked-area' ? 'total' : undefined,
-        emphasis: {
-            focus: 'series'
+    const series = data.series.map(s => {
+        const seriesConfig = {
+            name: s.name,
+            type: config.type === 'bar' ? 'bar' : 'line',
+            data: isCategoryAxis
+                ? s.data.map(d => d.value) // Category axis: just values
+                : s.data.map(d => [d.timestamp, d.value]), // Time axis: [timestamp, value]
+            itemStyle: { color: s.color },
+            smooth: config.type === 'line',
+            areaStyle: (config.type === 'area' || config.type === 'stacked-area') ? {
+                opacity: 0.3
+            } : undefined,
+            stack: config.type === 'stacked-area' ? 'total' : undefined,
+            emphasis: {
+                focus: 'series'
+            }
+        };
+
+        // Add reference line (markLine) if referenceValue is provided
+        if (typeof s.referenceValue === 'number' && s.data.length > 1) {
+            seriesConfig.markLine = {
+                silent: true,
+                symbol: 'none',
+                lineStyle: {
+                    color: s.color,
+                    type: 'dashed',
+                    width: 2,
+                    opacity: 0.7
+                },
+                label: {
+                    show: true,
+                    position: 'insideEndTop',
+                    formatter: () => formatter(s.referenceValue),
+                    color: s.color,
+                    fontSize: 10,
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    padding: [2, 4],
+                    borderRadius: 2
+                },
+                data: [
+                    { yAxis: s.referenceValue }
+                ]
+            };
         }
-    }));
+
+        return seriesConfig;
+    });
 
     // Calculate dynamic label interval based on container width
     const chartWidth = containerWidth - 100; // Account for grid margins
