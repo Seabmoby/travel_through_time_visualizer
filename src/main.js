@@ -437,6 +437,8 @@ function updateMapVisualization() {
 
 /**
  * Calculate values for all featured blockfaces based on current state and dataset
+ * Uses interval bucketing: first applies statistic per bucket, then averages across buckets
+ * This keeps the map synchronized with what the chart displays
  * @returns {Array<{segmentId: string, name: string, value: number}>}
  */
 function calculateBlockfaceOccupancy() {
@@ -477,24 +479,34 @@ function calculateBlockfaceOccupancy() {
             continue;
         }
 
-        let values;
-        if (isTransactions) {
-            // For transactions: use raw transaction values
-            values = blockfaceReadings.map(r => r.transactions || 0);
-        } else {
-            // For occupancy: calculate percentage
-            values = blockfaceReadings.map(r =>
-                r.capacity > 0 ? (r.occupied / r.capacity) * 100 : 0
-            );
+        // Bucket readings by current aggregation interval
+        const buckets = bucketize(blockfaceReadings, state.aggregation);
+        const bucketStats = [];
+
+        // Calculate statistic for each bucket
+        for (const [, bucketReadings] of buckets) {
+            let values;
+            if (isTransactions) {
+                values = bucketReadings.map(r => r.transactions || 0);
+            } else {
+                values = bucketReadings.map(r =>
+                    r.capacity > 0 ? (r.occupied / r.capacity) * 100 : 0
+                );
+            }
+
+            const bucketValue = calculate(values, state.statistic);
+            bucketStats.push(bucketValue);
         }
 
-        // Apply selected statistic
-        const statValue = calculate(values, state.statistic);
+        // Average across all buckets for the final map value
+        const finalValue = bucketStats.length > 0
+            ? bucketStats.reduce((a, b) => a + b, 0) / bucketStats.length
+            : 0;
 
         results.push({
             segmentId: blockface.segmentId,
             name: blockface.name,
-            value: statValue
+            value: finalValue
         });
     }
 
@@ -503,6 +515,8 @@ function calculateBlockfaceOccupancy() {
 
 /**
  * Calculate values for all neighborhoods based on current state and dataset
+ * Uses interval bucketing: first applies statistic per bucket, then averages across buckets
+ * This keeps the map synchronized with what the chart displays
  * @returns {Array<{id: string, name: string, value: number, color: string}>}
  */
 function calculateNeighborhoodOccupancy() {
@@ -536,24 +550,32 @@ function calculateNeighborhoodOccupancy() {
             continue;
         }
 
-        let values;
-        if (isTransactions) {
-            // For transactions: use raw transaction values
-            values = regionReadings.map(r => r.transactions);
-        } else {
-            // For occupancy: calculate percentage
-            values = regionReadings.map(r =>
-                (r.occupied / r.capacity) * 100
-            );
+        // Bucket readings by current aggregation interval
+        const buckets = bucketize(regionReadings, state.aggregation);
+        const bucketStats = [];
+
+        // Calculate statistic for each bucket
+        for (const [, bucketReadings] of buckets) {
+            let values;
+            if (isTransactions) {
+                values = bucketReadings.map(r => r.transactions);
+            } else {
+                values = bucketReadings.map(r => (r.occupied / r.capacity) * 100);
+            }
+
+            const bucketValue = calculate(values, state.statistic);
+            bucketStats.push(bucketValue);
         }
 
-        // Apply selected statistic
-        const statValue = calculate(values, state.statistic);
+        // Average across all buckets for the final map value
+        const finalValue = bucketStats.length > 0
+            ? bucketStats.reduce((a, b) => a + b, 0) / bucketStats.length
+            : 0;
 
         results.push({
             id: region.id,
             name: region.name,
-            value: statValue,
+            value: finalValue,
             color: region.color
         });
     }
