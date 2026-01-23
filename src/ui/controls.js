@@ -11,7 +11,7 @@ import { DATASET_TYPES } from '../lib/data-loader.js';
 import { getColorSchemes } from './map.js';
 
 // App version info
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 const APP_VERSION_DATE = '2026-01-22';
 
 // Markdown documentation path
