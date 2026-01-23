@@ -14,8 +14,8 @@ import { getColorSchemes } from './map.js';
 const APP_VERSION = '1.3.0';
 const APP_VERSION_DATE = '2026-01-22';
 
-// Markdown documentation path
-const DOCS_PATH = 'docs/aoi-value-calculation.md';
+// Markdown documentation path (relative to index.html in src/)
+const DOCS_PATH = '../docs/aoi-value-calculation.md';
 
 /**
  * Simple markdown to HTML converter
