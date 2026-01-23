@@ -63,6 +63,29 @@ Average across Buckets → Final Map Value
 | **P25** | 25th percentile via linear interpolation |
 | **P75** | 75th percentile via linear interpolation |
 | **Total** | `Σ values` |
+| **Actual** | Raw values (no aggregation) |
+
+### The "Actual" Statistic
+
+The **Actual** statistic bypasses aggregation and shows raw data values. Its behavior varies by series dimension:
+
+**Day of Week series:**
+- Creates a separate series for each specific date
+- Example: Selecting "Monday" shows "Monday (2023-01-02)", "Monday (2023-01-09)", etc. as individual lines
+- Useful for comparing the same weekday across different weeks
+
+**Time of Day series:**
+- Falls back to averaging since there's no single "actual" value per day
+- Each time period still aggregates readings within that period
+
+**AOI series:**
+- Shows individual bucket values without cross-bucket aggregation
+- The reference line still displays the average across buckets
+
+**When to use Actual:**
+- Investigating specific dates rather than patterns
+- Comparing week-over-week performance for the same day
+- Identifying outlier days that might be hidden by aggregation
 
 ## How Map and Chart Stay Synchronized
 
